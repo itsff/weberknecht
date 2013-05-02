@@ -1,17 +1,17 @@
 /*
  *  Copyright (C) 2012 Roderick Baier
- *  
+ *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
  *  You may obtain a copy of the License at
- *  
+ *
  *  	http://www.apache.org/licenses/LICENSE-2.0
- *  
+ *
  *  Unless required by applicable law or agreed to in writing, software
  *  distributed under the License is distributed on an "AS IS" BASIS,
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
- *  limitations under the License. 
+ *  limitations under the License.
  */
 
 package de.roderick.weberknecht;
@@ -36,27 +36,27 @@ public class WebSocket
 {
 	private static final String GUID = "258EAFA5-E914-47DA-95CA-C5AB0DC85B11";
 	private static final int VERSION = 13;
-	
+
 	static final byte OPCODE_TEXT = 0x1;
 	static final byte OPCODE_BINARY = 0x2;
 	static final byte OPCODE_CLOSE = 0x8;
 	static final byte OPCODE_PING = 0x9;
 	static final byte OPCODE_PONG = 0xA;
-	
+
 	private URI url = null;
 	private WebSocketEventHandler eventHandler = null;
-	
+
 	private volatile boolean connected = false;
-	
+
 	private Socket socket = null;
 	private DataInputStream input = null;
 	private PrintStream output = null;
-	
+
 	private WebSocketReceiver receiver = null;
 	private WebSocketHandshake handshake = null;
-	
+
 	private final Random random = new Random();
-	
+
 	public WebSocket(URI url) throws WebSocketException
 	{
 		this(url, null, null);
@@ -284,18 +284,66 @@ public class WebSocket
 			}
 			try {
 				SocketFactory factory = SSLSocketFactory.getDefault();
+
+
+                /*
+                TrustManager[] trustManagers = new TrustManager[]{new NaiveTrustManager()};
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                sslContext.init(
+                        null,
+                        trustManagers,
+                        null);
+                factory = sslContext.getSocketFactory();*/
+
+
+
 				socket = factory.createSocket(host, port);
+
+
 			} catch (UnknownHostException uhe) {
 				throw new WebSocketException("unknown host: " + host, uhe);
 			} catch (IOException ioe) {
 				throw new WebSocketException("error while creating secure socket to " + url, ioe);
 			}
-		} else {
+            /*catch (NoSuchAlgorithmException e)
+            {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }
+            catch (KeyManagementException e)
+            {
+                e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            }*/
+        } else {
 			throw new WebSocketException("unsupported protocol: " + scheme);
 		}
 
 		return socket;
 	}
+
+
+    /**
+     * Blindly trusts all certificates.
+     */
+    private class NaiveTrustManager implements javax.net.ssl.X509TrustManager
+    {
+
+        public java.security.cert.X509Certificate[] getAcceptedIssuers()
+        {
+            return null;
+        }
+
+
+        public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType)
+        {
+            //No need to implement.
+        }
+
+
+        public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType)
+        {
+            //No need to implement.
+        }
+    }
 
 	private byte[] generateMask()
 	{
